@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Prompt Navigator",
+  "version": "2.0.0",
+  "description": "Navigate prompts on ChatGPT, Gemini, Claude, Grok, DeepSeek & Perplexity.",
+  "permissions": ["storage"],
+  "host_permissions": [
+  "https://chatgpt.com/*",
+  "https://gemini.google.com/*",
+  "https://claude.ai/*",
+  "https://grok.com/*",
+  "https://x.com/*", 
+  "https://chat.deepseek.com/*",
+  "https://www.perplexity.ai/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://gemini.google.com/*",
+        "https://claude.ai/*",
+        "https://grok.com/*",
+        "https://x.com/*", 
+        "https://chat.deepseek.com/*",
+        "https://www.perplexity.ai/*"
+      ],
+      "js": [
+        "adapters/base.js",
+        "adapters/chatgpt.js",
+        "adapters/gemini.js",
+        "adapters/claude.js",
+        "adapters/grok.js",
+        "adapters/deepseek.js",
+        "adapters/perplexity.js",
+        "content.js"
+      ],
+      "css": ["sidebar.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
