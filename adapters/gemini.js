@@ -1,77 +1,104 @@
-// gemini.js - FIXED VERSION
-// Addresses: Triple Ghost Bug, Missing Replies, Stuck History
+// gemini.js - v2.0 FINAL - FIXED USER PROMPT TRACKING
+// This version properly tracks BOTH user prompts AND AI responses
 
 class GeminiAdapter extends BaseAdapter {
   constructor() {
     super();
     this.platformName = 'gemini';
     
-    // FIX #1: Use more specific container that survives navigation
-    // The main chat scroll container is stable across chat switches
-    this.containerSelector = 'chat-window, main[role="main"], .conversation-container';
+    // CRITICAL FIX: Target conversation-turn containers, not just message-content
+    // Gemini wraps each user/AI exchange in a conversation-turn element
+    this.containerSelector = 'main[role="main"], chat-window, .conversation-container, body';
     
-    // FIX #2: Target the FINAL rendered text containers only
-    // Avoid draft/history versions by being very specific
-    this.messageSelector = 'message-content.model-response-text, message-content.user-query, [data-augmented-ui-role]';
+    // FIXED SELECTORS: Include conversation-turn to capture user prompts
+    this.messageSelector = [
+      'conversation-turn',                    // PRIMARY: Captures full turns (user + AI)
+      'message-content',                      // Individual message content
+      '[data-message-author-role="user"]',    // Explicit user messages
+      '[data-message-author-role="model"]',   // Explicit AI messages
+      '.user-query-container',                // User prompt containers
+      '.model-response-container'             // AI response containers
+    ].join(', ');
   }
 
   extractRole(node) {
-    // FIX #3: Use multiple signals to determine role accurately
+    // STRATEGY 1: Check data-message-author-role attribute (most reliable)
+    const directRole = node.getAttribute('data-message-author-role');
+    if (directRole === 'user') return 'user';
+    if (directRole === 'model') return 'assistant';
     
-    // Method 1: Check direct class names
-    if (node.classList.contains('user-query')) return 'user';
-    if (node.classList.contains('model-response-text')) return 'assistant';
-    
-    // Method 2: Check data attributes (more reliable)
-    const role = node.getAttribute('data-augmented-ui-role');
-    if (role === 'user') return 'user';
-    if (role === 'model') return 'assistant';
-    
-    // Method 3: Look for parent container attributes
-    const parent = node.closest('[data-message-author-role]');
-    if (parent) {
-      const parentRole = parent.getAttribute('data-message-author-role');
-      if (parentRole) return parentRole;
+    // STRATEGY 2: Check parent conversation-turn for role
+    const conversationTurn = node.closest('conversation-turn');
+    if (conversationTurn) {
+      const turnRole = conversationTurn.getAttribute('data-message-author-role');
+      if (turnRole === 'user') return 'user';
+      if (turnRole === 'model') return 'assistant';
     }
     
-    // Method 4: Check for user avatar containers
-    const userContainer = node.closest('.user-query-container');
-    if (userContainer) return 'user';
+    // STRATEGY 3: Look for parent container with role
+    const parentWithRole = node.closest('[data-message-author-role]');
+    if (parentWithRole) {
+      const parentRole = parentWithRole.getAttribute('data-message-author-role');
+      if (parentRole === 'user') return 'user';
+      if (parentRole === 'model') return 'assistant';
+    }
     
-    // Method 5: Fallback - check text content pattern
-    // Gemini often prefixes AI responses with specific markers
+    // STRATEGY 4: Check for user/model specific classes
+    if (node.classList.contains('user-query') || 
+        node.closest('.user-query-container')) {
+      return 'user';
+    }
+    
+    if (node.classList.contains('model-response-text') || 
+        node.closest('.model-response-container')) {
+      return 'assistant';
+    }
+    
+    // STRATEGY 5: Pattern matching on text content
+    // User messages tend to be shorter and question-like
     const text = node.textContent?.trim() || '';
-    if (text.startsWith('You:') || text.startsWith('User:')) return 'user';
+    if (text.length < 200 && (text.endsWith('?') || text.endsWith('please'))) {
+      return 'user';
+    }
     
-    // Default to assistant if unclear (most responses are AI)
+    // STRATEGY 6: Check for presence of response indicators
+    // AI responses often have specific formatting elements
+    if (node.querySelector('.model-response-text') || 
+        node.querySelector('[class*="markdown"]')) {
+      return 'assistant';
+    }
+    
+    // DEFAULT: If we can't determine, assume assistant
+    // (Better to show as AI than miss a message entirely)
+    console.log('[PN-Gemini] Could not determine role, defaulting to assistant:', 
+                text.substring(0, 50));
     return 'assistant';
   }
 
   extractPreview(node) {
-    // FIX #4: Clean extraction to avoid duplicate text
+    // Try to find the actual text content, avoiding UI elements
+    let textContainer = node.querySelector('message-content') || 
+                       node.querySelector('.message-text-content') ||
+                       node.querySelector('[class*="markdown"]') ||
+                       node;
     
-    // Get direct text content only (not nested elements)
     let text = '';
     
-    // Try to get the innermost text container
-    const textContainer = node.querySelector('.markdown-content, .message-text-content') || node;
-    
-    // Get only direct text nodes, not nested buttons/UI elements
+    // Use TreeWalker for clean text extraction
     const walker = document.createTreeWalker(
       textContainer,
       NodeFilter.SHOW_TEXT,
       {
         acceptNode: (textNode) => {
-          // Skip if parent is a button, tooltip, or hidden element
           const parent = textNode.parentElement;
           if (!parent) return NodeFilter.FILTER_REJECT;
           
           const tag = parent.tagName.toLowerCase();
-          if (tag === 'button' || tag === 'script' || tag === 'style') {
+          // Skip buttons, scripts, and hidden elements
+          if (['button', 'script', 'style', 'svg'].includes(tag)) {
             return NodeFilter.FILTER_REJECT;
           }
           
-          // Skip hidden elements
           const style = window.getComputedStyle(parent);
           if (style.display === 'none' || style.visibility === 'hidden') {
             return NodeFilter.FILTER_REJECT;
@@ -86,62 +113,56 @@ class GeminiAdapter extends BaseAdapter {
     let currentNode;
     while (currentNode = walker.nextNode()) {
       const trimmed = currentNode.textContent.trim();
-      if (trimmed) textParts.push(trimmed);
+      if (trimmed && trimmed.length > 2) {
+        textParts.push(trimmed);
+      }
     }
     
     text = textParts.join(' ');
     
-    // Fallback to simple extraction if walker failed
-    if (!text) {
-      text = node.textContent?.trim() || '';
+    // Fallback if TreeWalker didn't work
+    if (!text || text.length < 5) {
+      text = textContainer.textContent?.trim() || '';
     }
     
-    // Clean up prefixes
+    // Clean up common prefixes
     text = text.replace(/^(You:|User:|Gemini:|Model:)\s*/i, '');
+    text = text.replace(/\s+/g, ' '); // Normalize whitespace
     
     return text.substring(0, 120);
   }
 
   extractAttachments(node) {
-    // FIX #5: Look in stable parent containers, not just the text node
-    
-    // Find the message container (parent of the text)
-    const messageContainer = node.closest('[data-message-id]') 
-                          || node.closest('.conversation-turn')
-                          || node.closest('[class*="message"]')
-                          || node.parentElement;
+    // Find the message container
+    const messageContainer = node.closest('conversation-turn') ||
+                          node.closest('[data-message-id]') ||
+                          node.closest('.message-container') ||
+                          node.parentElement;
     
     if (!messageContainer) return null;
     
     // Check for images (exclude avatars and UI icons)
     const images = Array.from(messageContainer.querySelectorAll('img'));
     const validImages = images.filter(img => {
-      // Exclude small icons and avatars
       const width = img.naturalWidth || img.width || 0;
       const height = img.naturalHeight || img.height || 0;
+      const alt = img.alt?.toLowerCase() || '';
+      const src = img.src || '';
       
+      // Exclude small icons and avatars
       if (width < 40 || height < 40) return false;
+      if (alt.includes('avatar') || alt.includes('user') || alt.includes('gemini')) return false;
       
-      // Exclude avatar images
-      if (img.alt?.toLowerCase().includes('avatar')) return false;
-      if (img.alt?.toLowerCase().includes('user')) return false;
-      if (img.alt?.toLowerCase().includes('gemini')) return false;
+      // Include uploaded content
+      if (src.includes('upload') || src.includes('file') || src.startsWith('blob:')) return true;
       
-      // Check if it's in an attachment container
-      const attachmentParent = img.closest('[class*="attachment"]') 
-                            || img.closest('[class*="upload"]')
-                            || img.closest('[class*="file"]');
-      
-      return attachmentParent !== null || width > 100;
+      // Include larger images
+      return width > 100 && height > 100;
     });
     
     if (validImages.length > 0) return 'image';
     
     // Check for PDF attachments
-    const pdfIndicators = messageContainer.querySelectorAll('[class*="pdf"], [data-file-type="pdf"]');
-    if (pdfIndicators.length > 0) return 'pdf';
-    
-    // Check text content for file references
     const text = messageContainer.textContent || '';
     if (/\b\w+\.pdf\b/i.test(text) && messageContainer.querySelector('[class*="file"]')) {
       return 'pdf';
@@ -150,7 +171,7 @@ class GeminiAdapter extends BaseAdapter {
     // Check for code file attachments
     const codeExtensions = ['.py', '.js', '.html', '.css', '.json', '.cpp', '.java', '.txt', '.md'];
     for (const ext of codeExtensions) {
-      if (text.includes(ext) && messageContainer.querySelector('[class*="file"], [class*="attachment"]')) {
+      if (text.includes(ext) && messageContainer.querySelector('[class*="file"]')) {
         return 'code';
       }
     }
@@ -158,54 +179,86 @@ class GeminiAdapter extends BaseAdapter {
     return null;
   }
   
-  // FIX #6: Add deduplication method
-  // Override the base method to prevent duplicate entries
+  // Validate messages to avoid empty or invalid entries
   isValidMessage(node) {
     if (!node || !node.textContent) return false;
     
-    // Skip if too short (likely UI element)
     const text = node.textContent.trim();
-    if (text.length < 5) return false;
     
-    // Skip if it's a duplicate (check if we already indexed this exact text)
-    // This prevents the "triple ghost" issue
-    const preview = this.extractPreview(node);
+    // Must have meaningful content
+    if (text.length < 10) return false;
     
-    // Check if this preview already exists in recent messages
-    // (Check last 5 messages to handle legitimate duplicates in different contexts)
-    const recentDuplicates = this.index
-      .slice(-5)
-      .filter(msg => msg.preview === preview);
+    // Skip loading indicators
+    if (text === 'Thinking...' || text === 'Loading...' || text === '...') return false;
     
-    if (recentDuplicates.length > 0) {
-      console.log('[PN-Gemini] Skipping duplicate message:', preview.substring(0, 30));
-      return false;
-    }
+    // Skip if it's just buttons/UI elements
+    if (node.tagName === 'BUTTON' || node.closest('button')) return false;
+    
+    // Skip if it's a toolbar or menu
+    if (node.closest('[role="toolbar"]') || node.closest('[role="menu"]')) return false;
     
     return true;
   }
   
-  // FIX #7: Add stable message identification
-  // This helps with detecting when messages are truly new vs. re-renders
+  // Generate stable message ID
   getMessageId(node) {
-    // Try to get stable ID from DOM attributes
+    // Try to get stable ID from DOM
     const container = node.closest('[data-message-id]');
     if (container) {
       return container.getAttribute('data-message-id');
     }
     
-    // Fallback: create a stable hash from content + position
+    // Create stable hash from content + role + position
     const role = this.extractRole(node);
     const preview = this.extractPreview(node);
-    const position = Array.from(document.querySelectorAll(this.messageSelector)).indexOf(node);
+    const allMessages = Array.from(document.querySelectorAll(this.messageSelector));
+    const position = allMessages.indexOf(node);
     
-    return `${role}-${position}-${preview.substring(0, 20).replace(/\s+/g, '-')}`;
+    // Simple hash function
+    let hash = 0;
+    const hashInput = `${role}-${preview.substring(0, 30)}`;
+    for (let i = 0; i < hashInput.length; i++) {
+      const char = hashInput.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    
+    return `gemini-${role}-${position}-${Math.abs(hash).toString(36)}`;
+  }
+  
+  // Find stable container
+  findContainer() {
+    const selectors = this.containerSelector.split(',').map(s => s.trim());
+    
+    for (const selector of selectors) {
+      const container = document.querySelector(selector);
+      if (container && this.isValidContainer(container)) {
+        console.log('[PN-Gemini] Found container:', selector);
+        return container;
+      }
+    }
+    
+    console.warn('[PN-Gemini] No valid container found, using body');
+    return document.body;
+  }
+  
+  isValidContainer(element) {
+    if (!element) return false;
+    
+    // Check if it contains messages
+    const messages = element.querySelectorAll(this.messageSelector);
+    const validMessages = Array.from(messages).filter(msg => {
+      return this.isValidMessage(msg);
+    });
+    
+    console.log(`[PN-Gemini] Container has ${validMessages.length} valid messages`);
+    return validMessages.length > 0;
   }
 }
 
-// Ensure global registration
+// Global registration
 if (typeof window !== 'undefined') {
   window.GeminiAdapter = GeminiAdapter;
 }
 
-console.log('[PN] Gemini adapter loaded (FIXED VERSION)');
+console.log('[PN] Gemini adapter v2.0 loaded - USER PROMPT TRACKING FIXED');
