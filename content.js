@@ -223,9 +223,13 @@ class PromptNavigator {
 
   showContextMenu(index, x, y) {
     const menu = document.getElementById('pn-context-menu');
-    menu.style.display = 'block';
+    
+    // FIX: Set position FIRST
     menu.style.left = `${x}px`;
     menu.style.top = `${y}px`;
+    
+    // THEN show it
+    menu.style.display = 'block';
     
     document.getElementById('pn-ctx-summarize').onclick = () => {
       this.runSummarization(index);
