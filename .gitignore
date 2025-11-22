@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+*.log
+.env
+dist/
+# Ignore user's personal keys if they ever saved them to a file
+api_keys.txt
