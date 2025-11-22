@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Navigator - Chrome Extension Project</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🧭 Prompt Navigator</h1>
+            <p class="subtitle">Local-First Cross-AI Chrome Extension for Dynamic Prompt Indexing</p>
+            <div class="version-badge">v3.1.0</div>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="overview">Overview</button>
+            <button class="tab-btn" data-tab="structure">Project Structure</button>
+            <button class="tab-btn" data-tab="files">File Contents</button>
+            <button class="tab-btn" data-tab="installation">Installation</button>
+            <button class="tab-btn" data-tab="usage">Usage Guide</button>
+        </nav>
+
+        <div class="tab-content active" id="overview">
+            <section class="card">
+                <h2>Project Overview</h2>
+                <p>Prompt Navigator is a privacy-first Chrome extension that dynamically indexes prompts, responses, and attachments across multiple AI platforms including ChatGPT, Gemini, Claude, Grok, and DeepSeek.</p>
+                
+                <h3>Key Features</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔢</div>
+                        <h4>Dynamic Indexing</h4>
+                        <p>Real-time message indexing with serial numbers and timestamps</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h4>Jump to Message</h4>
+                        <p>Click any indexed message to jump directly to it in the chat</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📌</div>
+                        <h4>Pin &amp; Save</h4>
+                        <p>Persist important messages locally with IndexedDB</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📎</div>
+                        <h4>Attachments</h4>
+                        <p>Track files with type icons, thumbnails, and previews</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🤖</div>
+                        <h4>AI Summaries</h4>
+                        <p>Premium: Auto-generate titles and summaries</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🏷️</div>
+                        <h4>Auto-Tagging</h4>
+                        <p>Premium: Intelligent topic tags and intent classification</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔒</div>
+                        <h4>Privacy First</h4>
+                        <p>Local-first design, no data leaves your device by default</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h4>Search &amp; Filter</h4>
+                        <p>Powerful keyword search and multi-criteria filtering</p>
+                    </div>
+                </div>
+
+                <h3>Supported AI Platforms</h3>
+                <div class="platform-list">
+                    <span class="platform-badge">ChatGPT</span>
+                    <span class="platform-badge">Gemini</span>
+                    <span class="platform-badge">Claude</span>
+                    <span class="platform-badge">Grok</span>
+                    <span class="platform-badge">DeepSeek</span>
+                </div>
+
+                <h3>Architecture Highlights</h3>
+                <ul class="architecture-list">
+                    <li><strong>Manifest V3:</strong> Modern Chrome extension architecture with service workers</li>
+                    <li><strong>Content Script Adapters:</strong> Modular platform-specific adapters for each AI service</li>
+                    <li><strong>Dynamic In-Memory Index:</strong> Real-time indexing with MutationObserver</li>
+                    <li><strong>IndexedDB Storage:</strong> Efficient local persistence for pinned items</li>
+                    <li><strong>Robust Locators:</strong> CSS selectors + context text with fuzzy fallback</li>
+                    <li><strong>Premium NLP:</strong> User-controlled API integration for summarization and tagging</li>
+                </ul>
+            </section>
+        </div>
+
+        <div class="tab-content" id="structure">
+            <section class="card">
+                <h2>Project Structure</h2>
+                <pre class="code-block">prompt-navigator/
+├── manifest.json              # Extension manifest (Manifest V3)
+├── background.js              # Service worker for background tasks
+├── popup.html                 # Extension popup UI
+├── popup.js                   # Popup logic
+├── popup.css                  # Popup styling
+├── sidebar.html               # Sidebar UI injected into pages
+├── sidebar.js                 # Sidebar logic and rendering
+├── sidebar.css                # Sidebar styling
+├── content.js                 # Main content script coordinator
+├── db.js                      # IndexedDB operations
+├── nlp.js                     # Premium NLP features
+├── utils.js                   # Shared utilities
+├── adapters/
+│   ├── base.js               # Base adapter class
+│   ├── chatgpt.js            # ChatGPT adapter
+│   ├── gemini.js             # Gemini adapter
+│   ├── claude.js             # Claude adapter
+│   ├── grok.js               # Grok adapter
+│   └── deepseek.js           # DeepSeek adapter
+├── icons/
+│   ├── icon16.png            # Extension icon 16x16
+│   ├── icon48.png            # Extension icon 48x48
+│   ├── icon128.png           # Extension icon 128x128
+│   ├── pdf.svg               # PDF file icon
+│   ├── image.svg             # Image file icon
+│   ├── code.svg              # Code file icon
+│   ├── doc.svg               # Document file icon
+│   └── file.svg              # Generic file icon
+└── README.md                  # Project documentation</pre>
+
+                <h3>Component Overview</h3>
+                <div class="component-info">
+                    <h4>Content Scripts (Adapters)</h4>
+                    <p>Each AI platform has a dedicated adapter implementing:</p>
+                    <ul>
+                        <li><code>containerSelector</code> - Message container element</li>
+                        <li><code>messageSelector</code> - Individual message bubbles</li>
+                        <li><code>getChatId()</code> - Derive stable chat identifier</li>
+                        <li><code>extractTimestamp(node)</code> - Parse page timestamps</li>
+                        <li><code>extractAttachments(node)</code> - Find attachments</li>
+                        <li><code>computeLocator(node)</code> - Generate robust CSS selector + context</li>
+                    </ul>
+
+                    <h4>Background Script</h4>
+                    <p>Service worker handling:</p>
+                    <ul>
+                        <li>Extension lifecycle management</li>
+                        <li>Cross-component messaging</li>
+                        <li>IndexedDB coordination</li>
+                        <li>Optional network operations for premium features</li>
+                    </ul>
+
+                    <h4>Sidebar UI</h4>
+                    <p>React-inspired vanilla JS UI with:</p>
+                    <ul>
+                        <li>Floating toggle button</li>
+                        <li>Search and filter controls</li>
+                        <li>Message list with serial badges</li>
+                        <li>Context menu for actions</li>
+                        <li>Settings panel</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+
+        <div class="tab-content" id="files">
+            <section class="card">
+                <h2>Download Project Files</h2>
+                <p class="info-box">Click the buttons below to download individual files or use the "Download All" button to get the complete project as a ZIP file (simulated as separate downloads).</p>
+                
+                <div class="file-category">
+                    <h3>Core Extension Files</h3>
+                    <div class="file-buttons">
+                        <button class="download-btn" data-file="manifest">📄 manifest.json</button>
+                        <button class="download-btn" data-file="background">📄 background.js</button>
+                        <button class="download-btn" data-file="content">📄 content.js</button>
+                        <button class="download-btn" data-file="db">📄 db.js</button>
+                        <button class="download-btn" data-file="nlp">📄 nlp.js</button>
+                        <button class="download-btn" data-file="utils">📄 utils.js</button>
+                    </div>
+                </div>
+
+                <div class="file-category">
+                    <h3>UI Files</h3>
+                    <div class="file-buttons">
+                        <button class="download-btn" data-file="popup-html">📄 popup.html</button>
+                        <button class="download-btn" data-file="popup-js">📄 popup.js</button>
+                        <button class="download-btn" data-file="popup-css">📄 popup.css</button>
+                        <button class="download-btn" data-file="sidebar-html">📄 sidebar.html</button>
+                        <button class="download-btn" data-file="sidebar-js">📄 sidebar.js</button>
+                        <button class="download-btn" data-file="sidebar-css">📄 sidebar.css</button>
+                    </div>
+                </div>
+
+                <div class="file-category">
+                    <h3>Adapter Files</h3>
+                    <div class="file-buttons">
+                        <button class="download-btn" data-file="adapter-base">📄 base.js</button>
+                        <button class="download-btn" data-file="adapter-chatgpt">📄 chatgpt.js</button>
+                        <button class="download-btn" data-file="adapter-gemini">📄 gemini.js</button>
+                        <button class="download-btn" data-file="adapter-claude">📄 claude.js</button>
+                        <button class="download-btn" data-file="adapter-grok">📄 grok.js</button>
+                        <button class="download-btn" data-file="adapter-deepseek">📄 deepseek.js</button>
+                    </div>
+                </div>
+
+                <div class="file-category">
+                    <h3>Documentation</h3>
+                    <div class="file-buttons">
+                        <button class="download-btn" data-file="readme">📄 README.md</button>
+                        <button class="download-btn" data-file="guide">📄 INSTALLATION_GUIDE.md</button>
+                    </div>
+                </div>
+
+                <div class="download-all-section">
+                    <button class="download-all-btn" id="downloadAll">⬇️ Download All Files</button>
+                    <p class="note">Note: Icons (SVG/PNG) will be generated inline in the code. You may need to create actual image files for production.</p>
+                </div>
+            </section>
+        </div>
+
+        <div class="tab-content" id="installation">
+            <section class="card">
+                <h2>Installation Guide</h2>
+                
+                <h3>Step 1: Download the Project</h3>
+                <ol>
+                    <li>Navigate to the "File Contents" tab</li>
+                    <li>Click "Download All Files" to get all project files</li>
+                    <li>Create a folder named <code>prompt-navigator</code> on your computer</li>
+                    <li>Extract all downloaded files into this folder</li>
+                </ol>
+
+                <h3>Step 2: Create Folder Structure</h3>
+                <p>Organize the files according to this structure:</p>
+                <pre class="code-block">prompt-navigator/
+├── manifest.json
+├── background.js
+├── content.js
+├── db.js
+├── nlp.js
+├── utils.js
+├── popup.html
+├── popup.js
+├── popup.css
+├── sidebar.html
+├── sidebar.js
+├── sidebar.css
+├── adapters/
+│   ├── base.js
+│   ├── chatgpt.js
+│   ├── gemini.js
+│   ├── claude.js
+│   ├── grok.js
+│   └── deepseek.js
+└── icons/
+    ├── icon16.png
+    ├── icon48.png
+    └── icon128.png</pre>
+
+                <h3>Step 3: Create Icon Files</h3>
+                <p>Create simple icon images (16x16, 48x48, 128x128 PNG files) with a compass or navigation theme. You can use any icon generator tool or create them manually.</p>
+
+                <h3>Step 4: Load Extension in Chrome</h3>
+                <ol>
+                    <li>Open Chrome and navigate to <code>chrome://extensions/</code></li>
+                    <li>Enable "Developer mode" using the toggle in the top-right corner</li>
+                    <li>Click "Load unpacked" button</li>
+                    <li>Select the <code>prompt-navigator</code> folder you created</li>
+                    <li>The extension should now appear in your extensions list</li>
+                </ol>
+
+                <h3>Step 5: Test the Extension</h3>
+                <ol>
+                    <li>Navigate to ChatGPT, Gemini, Claude, Grok, or DeepSeek</li>
+                    <li>Look for the floating toggle button (circular arrow) on the page</li>
+                    <li>Click it to open the sidebar and see your indexed messages</li>
+                    <li>Try clicking a message in the sidebar to jump to it</li>
+                </ol>
+
+                <div class="warning-box">
+                    <strong>⚠️ Important Notes:</strong>
+                    <ul>
+                        <li>This is a developer version - not yet published to Chrome Web Store</li>
+                        <li>You need to keep "Developer mode" enabled</li>
+                        <li>The extension will need to be reloaded after Chrome updates</li>
+                        <li>Premium features require you to provide your own API keys</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+
+        <div class="tab-content" id="usage">
+            <section class="card">
+                <h2>Usage Guide</h2>
+
+                <h3>Basic Usage</h3>
+                <div class="usage-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Open an AI Chat</h4>
+                        <p>Navigate to any supported AI platform (ChatGPT, Gemini, Claude, Grok, or DeepSeek) and open or start a conversation.</p>
+                    </div>
+                </div>
+
+                <div class="usage-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>View the Index</h4>
+                        <p>Click the floating toggle button (circular arrow icon) to open the sidebar. The extension automatically indexes all visible messages.</p>
+                    </div>
+                </div>
+
+                <div class="usage-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Jump to Messages</h4>
+                        <p>Click any message in the sidebar list to jump directly to it in the chat. The message will be highlighted for easy visibility.</p>
+                    </div>
+                </div>
+
+                <div class="usage-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Search and Filter</h4>
+                        <p>Use the search bar to find specific messages. Apply filters to narrow down by AI platform, date range, or pinned status.</p>
+                    </div>
+                </div>
+
+                <h3>Advanced Features</h3>
+                
+                <h4>📌 Pinning Messages</h4>
+                <ul>
+                    <li>Right-click (or click three-dot menu) on any message in the sidebar</li>
+                    <li>Select "Pin Message" to save it permanently to local storage</li>
+                    <li>Pinned messages persist across browser sessions</li>
+                    <li>View all pinned messages using the "Pinned" filter</li>
+                </ul>
+
+                <h4>📎 Working with Attachments</h4>
+                <ul>
+                    <li>Messages with attachments show file type icons</li>
+                    <li>Image attachments display thumbnails</li>
+                    <li>Click an attachment to preview or download it</li>
+                    <li>Supported types: images, PDFs, code files, documents</li>
+                </ul>
+
+                <h4>🤖 Premium Features (Requires API Key)</h4>
+                <p>To use premium NLP features:</p>
+                <ol>
+                    <li>Click the settings icon in the sidebar</li>
+                    <li>Navigate to "Premium Features" section</li>
+                    <li>Enter your OpenAI or Anthropic API key</li>
+                    <li>Enable "Summarization" or "Auto-Tagging"</li>
+                </ol>
+
+                <p><strong>Summarization:</strong> Generate concise titles and summaries for entire chats or individual messages.</p>
+                <p><strong>Auto-Tagging:</strong> Automatically classify messages with topical tags and intent labels (summarize, debug, generate, translate, analyze, refactor).</p>
+
+                <h4>💾 Export and Import</h4>
+                <ul>
+                    <li>Export pinned messages to JSON or CSV format</li>
+                    <li>Import previously exported data</li>
+                    <li>Useful for backup and migration</li>
+                </ul>
+
+                <h3>Privacy &amp; Security</h3>
+                <div class="info-box">
+                    <strong>🔒 Your Data is Safe:</strong>
+                    <ul>
+                        <li><strong>Local-First:</strong> By default, nothing leaves your device</li>
+                        <li><strong>No Automatic Storage:</strong> Messages are only saved when you explicitly pin them</li>
+                        <li><strong>Your API Keys:</strong> Premium features use your own API keys - we never see your content</li>
+                        <li><strong>Minimal Permissions:</strong> Extension only accesses supported AI chat pages</li>
+                        <li><strong>Open Source:</strong> All code is available for review</li>
+                    </ul>
+                </div>
+
+                <h3>Keyboard Shortcuts</h3>
+                <div class="shortcuts">
+                    <div class="shortcut-item">
+                        <kbd>Ctrl/Cmd + Shift + N</kbd>
+                        <span>Toggle Sidebar</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl/Cmd + F</kbd>
+                        <span>Focus Search (when sidebar open)</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Esc</kbd>
+                        <span>Close Sidebar</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>↑/↓</kbd>
+                        <span>Navigate Message List</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Enter</kbd>
+                        <span>Jump to Selected Message</span>
+                    </div>
+                </div>
+
+                <h3>Troubleshooting</h3>
+                <div class="troubleshooting">
+                    <details>
+                        <summary>Sidebar doesn't appear</summary>
+                        <p>Make sure you're on a supported AI platform page. Try refreshing the page or checking if the extension is enabled in chrome://extensions/</p>
+                    </details>
+                    <details>
+                        <summary>Messages aren't indexed</summary>
+                        <p>The page structure may have changed. Check the console for errors or try the "Rescan" button in settings.</p>
+                    </details>
+                    <details>
+                        <summary>Jump to message doesn't work</summary>
+                        <p>If the exact selector fails, the extension tries fuzzy matching. For heavily modified pages, this may not always succeed.</p>
+                    </details>
+                    <details>
+                        <summary>Premium features not working</summary>
+                        <p>Verify your API key is correctly entered and has sufficient credits. Check the console for API errors.</p>
+                    </details>
+                </div>
+            </section>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; 2025 Prompt Navigator - Open Source Project</p>
+            <p>Built with ❤️ for AI power users</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
