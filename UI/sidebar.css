@@ -1,233 +1,163 @@
-/* sidebar.css - v3.0 FIXED (Namespaced & Aligned) */
+/* sidebar.css - v3.1 FINAL MERGE */
 
-/* Scope everything to the sidebar ID to prevent leaking styles to the main page */
-#pn-sidebar-root {
-  /* Light Theme Variables */
-  --pn-bg: #ffffff;
-  --pn-surface: #f8f9fa;
-  --pn-text: #1a1a1a;
-  --pn-text-sec: #6b7280;
-  --pn-border: #e5e7eb;
-  --pn-accent: #3b82f6;
-  --pn-hover: #f3f4f6;
-  --pn-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+/* 1. Define Colors */
+:root {
+  --pn-primary: #3b82f6;
+  --pn-success: #10b981;
+  --pn-error: #ef4444;
+  
+  /* Light Theme Defaults */
+  --pn-surface: #ffffff; /* Solid white for light mode to fix transparency */
+  --pn-bg: #f8fafc;
+  --pn-text: #0f172a;
+  --pn-text-secondary: #64748b;
+  --pn-border: #e2e8f0;
+  --pn-hover: #f1f5f9;
+  --pn-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+  
+  --pn-item-bg: #ffffff;
 }
 
-/* Dark Theme Variables */
+/* Dark Theme Overrides */
 #pn-sidebar.pn-dark-theme {
-  --pn-bg: #0f172a;
-  --pn-surface: #1e293b;
+  --pn-surface: #0f172a; /* Solid dark */
+  --pn-bg: #1e293b;
   --pn-text: #f8fafc;
-  --pn-text-sec: #94a3b8;
+  --pn-text-secondary: #94a3b8;
   --pn-border: #334155;
-  --pn-accent: #3b82f6;
   --pn-hover: #334155;
+  --pn-item-bg: #1e293b;
 }
 
-/* --- Toggle Button --- */
+/* 2. Toggle Button */
 #pn-toggle {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 48px;
-  height: 48px;
-  background: #3b82f6;
+  bottom: 24px; right: 24px;
+  width: 56px; height: 56px;
+  background: var(--pn-primary);
   color: white;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; cursor: pointer;
   z-index: 2147483647;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   border: none;
-  transition: transform 0.2s;
 }
 #pn-toggle:hover { transform: scale(1.1); }
 
-/* --- Sidebar Container --- */
+/* 3. Sidebar Container */
 #pn-sidebar {
   position: fixed;
-  top: 0;
-  right: 0;
-  width: 340px;
-  height: 100vh;
-  background: var(--pn-bg);
+  top: 0; right: 0;
+  width: 360px; height: 100vh;
+  background: var(--pn-surface); /* Uses solid color now */
   border-left: 1px solid var(--pn-border);
   z-index: 2147483646;
-  display: flex;
-  flex-direction: column;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  display: flex; flex-direction: column;
   transition: transform 0.3s ease;
-  box-sizing: border-box;
-  color: var(--pn-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  box-shadow: -5px 0 15px rgba(0,0,0,0.1);
 }
-
-#pn-sidebar * { box-sizing: border-box; }
-
 #pn-sidebar.pn-hidden { transform: translateX(100%); }
 
-/* --- Header --- */
+/* 4. Header */
 .pn-header {
   padding: 16px;
   border-bottom: 1px solid var(--pn-border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: flex; justify-content: space-between; align-items: center;
   background: var(--pn-surface);
 }
-.pn-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.pn-header h3 { margin: 0; font-size: 16px; color: var(--pn-text); font-weight: 600; }
 
+.pn-header-buttons { display: flex; gap: 8px; }
 .pn-header-buttons button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 18px;
-  color: var(--pn-text-sec);
-  padding: 4px;
+  background: transparent; border: none; cursor: pointer;
+  font-size: 18px; color: var(--pn-text-secondary);
+  padding: 4px; border-radius: 4px;
 }
-.pn-header-buttons button:hover { color: var(--pn-text); }
+.pn-header-buttons button:hover { background: var(--pn-hover); color: var(--pn-text); }
 
-/* --- Stats --- */
+/* 5. Stats */
 .pn-stats {
   padding: 8px 16px;
-  font-size: 12px;
-  color: var(--pn-text-sec);
   border-bottom: 1px solid var(--pn-border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; color: var(--pn-text-secondary);
+  background: var(--pn-bg);
 }
-#pn-refresh {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-}
+#pn-refresh { background: none; border: none; cursor: pointer; font-size: 14px; }
 
-/* --- List --- */
-#pn-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+/* 6. List & Scroll */
+.pn-list-container { flex: 1; overflow-y: auto; background: var(--pn-bg); }
+#pn-list { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
 
-/* --- Items (The Fix for Alignment & Distinction) --- */
+/* 7. Message Items */
 .pn-item {
-  display: flex;
-  flex-direction: column; /* Stack header and content */
-  padding: 10px;
+  padding: 12px;
   border-radius: 8px;
-  background: var(--pn-surface);
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s;
+  background: var(--pn-item-bg);
+  border: 1px solid var(--pn-border);
+  cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
-.pn-item:hover { background: var(--pn-hover); border-color: var(--pn-border); }
+.pn-item:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
 
-/* Header row: Serial # | Icon | Role */
-.pn-item-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 6px;
-  gap: 8px;
+.pn-item-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.pn-serial { 
+  background: var(--pn-primary); color: white; 
+  font-size: 11px; font-weight: bold; 
+  padding: 2px 6px; border-radius: 4px; 
 }
+.pn-role { font-size: 11px; font-weight: 600; color: var(--pn-text-secondary); margin-left: auto; }
+.pn-preview { font-size: 13px; line-height: 1.4; color: var(--pn-text); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2;-webkit-box-orient: vertical; overflow: hidden; }
 
-.pn-serial {
-  background: var(--pn-accent);
-  color: white;
-  font-size: 11px;
-  font-weight: bold;
-  padding: 2px 6px;
-  border-radius: 4px;
-  min-width: 20px;
-  text-align: center;
-}
+/* AI Indentation */
+.pn-item.pn-ai { margin-left: 24px; border-left: 3px solid var(--pn-border); }
 
-.pn-role {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--pn-text-sec);
-  margin-left: auto; /* Pushes role to the far right */
-}
-
-.pn-icon {
-  display: flex;
-  align-items: center;
-  color: var(--pn-text-sec);
-  width: 16px;
-  height: 16px;
-}
-.pn-icon svg { width: 100%; height: 100%; }
-
-/* Content preview */
-.pn-preview {
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--pn-text);
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-/* --- Distinction: AI Responses --- */
-.pn-item.pn-ai {
-  margin-left: 20px; /* Indentation */
-  border-left: 2px solid var(--pn-border); /* Subtle line */
-  background: transparent; /* Make it blend in more */
-  padding: 8px; /* Slightly smaller */
-}
-.pn-item.pn-ai .pn-role { color: var(--pn-accent); }
-
-/* --- Context Menu (Restored) --- */
+/* 8. Context Menu (The Missing Piece) */
 .pn-context-menu {
   position: fixed;
-  z-index: 2147483647;
+  z-index: 2147483647; /* Top of everything */
   background: var(--pn-surface);
   border: 1px solid var(--pn-border);
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   padding: 4px;
-  min-width: 140px;
+  min-width: 160px;
+  display: none; /* Controlled by JS */
 }
-.pn-menu-item {
-  padding: 8px 12px;
-  font-size: 13px;
-  color: var(--pn-text);
-  cursor: pointer;
-  border-radius: 4px;
+.pn-context-menu button {
+  display: block; width: 100%; text-align: left;
+  background: none; border: none;
+  padding: 8px 12px; color: var(--pn-text);
+  font-size: 13px; cursor: pointer; border-radius: 4px;
 }
-.pn-menu-item:hover { background: var(--pn-hover); }
-.pn-menu-divider { height: 1px; background: var(--pn-border); margin: 4px 0; }
+.pn-context-menu button:hover { background: var(--pn-hover); color: var(--pn-primary); }
 
-/* --- Settings Panel --- */
+/* 9. Settings Panel (The Other Missing Piece) */
 .pn-settings-panel {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   background: var(--pn-bg);
   z-index: 100;
+  display: flex; flex-direction: column;
   padding: 16px;
-  display: flex;
-  flex-direction: column;
 }
-.pn-settings-header { display: flex; align-items: center; margin-bottom: 20px; }
-.pn-settings-header h3 { flex: 1; margin: 0 0 0 10px; color: var(--pn-text); }
-#pn-settings-back-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--pn-text); }
+.pn-settings-header { display: flex; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--pn-border); padding-bottom: 10px; }
+.pn-settings-header h3 { margin: 0 0 0 10px; flex: 1; color: var(--pn-text); }
+#pn-settings-back-btn { background: none; border: none; font-size: 14px; cursor: pointer; color: var(--pn-text-secondary); font-weight: 600; }
 
-.pn-form-group label { display: block; font-size: 12px; margin-bottom: 6px; color: var(--pn-text-sec); }
+.pn-form-group { margin-top: 20px; }
+.pn-form-group label { display: block; font-size: 12px; margin-bottom: 6px; color: var(--pn-text-secondary); font-weight: 600; }
 #pn-api-key {
-  width: 100%; padding: 8px; border-radius: 6px;
+  width: 100%; padding: 10px; border-radius: 6px;
   border: 1px solid var(--pn-border);
   background: var(--pn-surface); color: var(--pn-text);
-  margin-bottom: 10px;
+  margin-bottom: 10px; box-sizing: border-box;
 }
 #pn-api-key-save {
-  width: 100%; padding: 8px; background: var(--pn-accent);
-  color: white; border: none; border-radius: 6px; cursor: pointer;
+  width: 100%; padding: 10px; background: var(--pn-primary);
+  color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
 }
+
+.pn-hidden { display: none !important; }
