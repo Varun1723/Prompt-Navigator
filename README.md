@@ -41,7 +41,7 @@ Prompt Navigator is a **local-first** Chrome extension that dynamically indexes 
 
 1. **Download** this repository or clone it:
    ```bash
-   git clone https://github.com/yourusername/prompt-navigator.git
+   git clone https://github.com/Varun1723/Prompt-Navigator.git
    ```
 
 2. **Open Chrome Extensions Page**:
@@ -295,7 +295,7 @@ We welcome contributions! Here's how you can help:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/prompt-navigator.git
+git clone https://github.com/Varun1723/Prompt-Navigator.git
 cd prompt-navigator
 
 # Load in Chrome
@@ -327,21 +327,17 @@ furnished to do so, subject to the following conditions:
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+<div style="background: #f5f5f5; padding: 16px; border-left: 4px solid #999; border-radius: 4px; color: #666; font-size: 13px; line-height: 1.6;">
+  <strong>⚠️ Disclaimer</strong><br><br>
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+</div>
 
 ---
 
 ## 💬 Support
 
-- **GitHub Issues**: https://github.com/yourusername/prompt-navigator/issues
-- **Discussions**: https://github.com/yourusername/prompt-navigator/discussions
-- **Email**: support@promptnavigator.dev
+- **GitHub Issues**: https://github.com/Varun1723/Prompt-Navigator/issues
+- **Discussions**: https://github.com/Varun1723/Prompt-Navigator/discussions
 
 ---
 
@@ -358,4 +354,4 @@ Special thanks to:
 
 **⭐ If you find Prompt Navigator useful, please star the repository!**
 
-[GitHub Repository](https://github.com/yourusername/prompt-navigator) | [Documentation](https://promptnavigator.dev) | [Issues](https://github.com/yourusername/prompt-navigator/issues)
+[GitHub Repository](https://github.com/Varun1723/Prompt-Navigator) | [Documentation](https://promptnavigator.dev) | [Issues](https://github.com/yourusername/prompt-navigator/issues)
