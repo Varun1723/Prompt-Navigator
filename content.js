@@ -205,9 +205,14 @@ class PromptNavigator {
       }
     });
 
-    this.index = newIndex;
-    console.log(`[PN] Index built: ${this.index.length} messages`);
-    this.renderList();
+    if (newIndex.length === 0 && this.index.length > 0 && this.currentUrl === window.location.href) {
+    console.log('[PN] Scan returned 0 items, preserving existing list.');
+    return; 
+  }
+
+  this.index = newIndex;
+  console.log(`[PN] Index built: ${this.index.length} messages`);
+  this.renderList();
   }
 
   renderList() {
@@ -278,6 +283,127 @@ class PromptNavigator {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+  // --- 1. Settings & Context Menu Logic ---
+
+  createContextMenu() {
+    document.addEventListener('contextmenu', (e) => {
+      const item = e.target.closest('.pn-item');
+      if (!item) return;
+      e.preventDefault();
+      const id = item.getAttribute('data-id');
+      const msg = this.index.find(m => m.id === id);
+      if (msg) this.showContextMenu(e.pageX, e.pageY, msg);
+    });
+  }
+
+  showContextMenu(x, y, msg) {
+    const existing = document.getElementById('pn-context-menu');
+    if (existing) existing.remove();
+
+    const menu = document.createElement('div');
+    menu.id = 'pn-context-menu';
+    menu.className = 'pn-context-menu';
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+
+    menu.innerHTML = `
+      <div class="pn-menu-item" id="ctx-jump">Jump to Message</div>
+      <div class="pn-menu-divider"></div>
+      <div class="pn-menu-item" id="ctx-title">Generate Title (Premium)</div>
+    `;
+
+    document.body.appendChild(menu);
+
+    // Action Handlers
+    document.getElementById('ctx-jump').onclick = () => {
+      this.jumpToMessage(msg.id);
+      menu.remove();
+    };
+    
+    document.getElementById('ctx-title').onclick = () => {
+      this.generateTitle(msg);
+      menu.remove();
+    };
+
+    // Close on outside click
+    setTimeout(() => {
+      document.addEventListener('click', () => menu.remove(), { once: true });
+    }, 100);
+  }
+
+  // --- 2. API Call Logic ---
+
+  generateTitle(msg) {
+    chrome.storage.local.get(['pn_api_key'], (result) => {
+      if (!result.pn_api_key) {
+        this.openSettings();
+        alert('Please enter your OpenAI API key first.');
+        return;
+      }
+
+      // Optimistic UI update
+      const originalPreview = msg.preview;
+      // Find the DOM element to update text immediately
+      const itemEl = document.querySelector(`.pn-item[data-id="${msg.id}"] .pn-preview`);
+      if(itemEl) itemEl.textContent = "Generating title...";
+
+      chrome.runtime.sendMessage({
+        type: 'NLP_REQUEST',
+        data: {
+          type: 'summarize',
+          text: msg.preview,
+          apiKey: result.pn_api_key,
+          provider: 'openai'
+        }
+      }, response => {
+        if (response && response.success) {
+          msg.preview = response.result.summary;
+          this.renderList(); // Re-render to show new title
+        } else {
+          if(itemEl) itemEl.textContent = originalPreview;
+          alert('Error: ' + (response?.error || 'Unknown error'));
+        }
+      });
+    });
+  }
+
+  // --- 3. Settings Panel Logic ---
+
+  openSettings() {
+    // Inject settings panel if not exists
+    if (!document.getElementById('pn-settings-panel')) {
+      const sidebar = document.getElementById('pn-sidebar');
+      const panel = document.createElement('div');
+      panel.id = 'pn-settings-panel';
+      panel.className = 'pn-settings-panel';
+      panel.innerHTML = `
+        <div class="pn-settings-header">
+          <button id="pn-settings-back-btn">←</button>
+          <h3>Settings</h3>
+        </div>
+        <div class="pn-settings-content">
+          <div class="pn-form-group">
+            <label>OpenAI API Key</label>
+            <input type="password" id="pn-api-key" placeholder="sk-...">
+            <button id="pn-api-key-save">Save Key</button>
+          </div>
+        </div>
+      `;
+      sidebar.appendChild(panel);
+      
+      // Load saved key
+      chrome.storage.local.get(['pn_api_key'], (r) => {
+        if(r.pn_api_key) document.getElementById('pn-api-key').value = r.pn_api_key;
+      });
+
+      // Listeners
+      document.getElementById('pn-settings-back-btn').onclick = () => panel.remove();
+      document.getElementById('pn-api-key-save').onclick = () => {
+        const key = document.getElementById('pn-api-key').value;
+        chrome.storage.local.set({ 'pn_api_key': key }, () => alert('Key Saved!'));
+      };
+    }
   }
 }
 

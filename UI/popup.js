@@ -1,10 +1,12 @@
 // popup.js - Extension popup logic
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Settings button
-  document.getElementById('settingsBtn').addEventListener('click', () => {
-    // Open options page (create if needed)
-    alert('Settings coming soon! For now, use the sidebar controls on AI chat pages.');
+  console.log('Popup opened');
+  // Just link the buttons
+  document.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      chrome.tabs.create({ url: link.href });
+    });
   });
 
   // Help button
