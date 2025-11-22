@@ -1,21 +1,17 @@
-// content.js - v3.0 FINAL
-// Features: Only rank USER prompts, larger file icons, dark theme support
+// content.js - v3.1 FINAL FIX
+// Restores Settings Button, Fixes Menu Logic
 
 function debounce(func, wait) {
   let timeout;
   return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
+    const later = () => { clearTimeout(timeout); func(...args); };
     clearTimeout(timeout);
     timeout = setTimeout(later, wait);
   };
 }
 
-console.log('[PN] Content script v3.0 - USER RANKING + DARK THEME');
+console.log('[PN] Content script v3.1 - SETTINGS RESTORED');
 
-// LARGER FILE ICONS (24x24 instead of 16x16)
 const ICONS = {
   image: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
   pdf: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
@@ -30,34 +26,23 @@ class PromptNavigator {
     this.debouncedBuildIndex = debounce(this.buildIndex.bind(this), 750);
     this.observer = null;
     this.currentUrl = window.location.href;
-    this.isDarkMode = false; // Theme state
+    this.isDarkMode = false;
     
-    setTimeout(() => {
-      this.init();
-    }, 2000);
+    setTimeout(() => { this.init(); }, 2000);
   }
 
   async init() {
-    console.log('[PN] Init started...');
     const host = window.location.hostname;
-
-    if (host.includes('chatgpt.com') || host.includes('chat.openai.com')) {
-      this.adapter = new ChatGPTAdapter();
-    } else if (host.includes('gemini.google.com')) {
-      this.adapter = new GeminiAdapter();
-    } else if (host.includes('claude.ai')) {
-      this.adapter = new ClaudeAdapter();
-    } else if (host.includes('deepseek.com')) {
-      this.adapter = new DeepSeekAdapter();
-    } else if (host.includes('perplexity.ai')) {
-      this.adapter = new PerplexityAdapter();
-    } else {
-      return;
-    }
+    if (host.includes('chatgpt.com')) this.adapter = new ChatGPTAdapter();
+    else if (host.includes('gemini.google.com')) this.adapter = new GeminiAdapter();
+    else if (host.includes('claude.ai')) this.adapter = new ClaudeAdapter();
+    else if (host.includes('deepseek.com')) this.adapter = new DeepSeekAdapter();
+    else if (host.includes('perplexity.ai')) this.adapter = new PerplexityAdapter();
+    else if (host.includes('grok.com') || host.includes('x.com')) this.adapter = new GrokAdapter();
+    else return;
 
     console.log(`[PN] Detected ${this.adapter.platformName}`);
     
-    // Load saved theme preference
     chrome.storage.local.get(['darkMode'], (result) => {
       this.isDarkMode = result.darkMode || false;
     });
@@ -66,44 +51,24 @@ class PromptNavigator {
     this.buildIndex();
     this.startObserver();
     this.startUrlWatcher();
+    this.createContextMenu(); // Prepare the context menu
   }
 
   startUrlWatcher() {
     setInterval(() => {
       if (this.currentUrl !== window.location.href) {
-        console.log('[PN] URL changed - Chat switch detected');
         this.currentUrl = window.location.href;
-        
-        // Reset adapter tracking
-        if (this.adapter.resetTracking) {
-          this.adapter.resetTracking();
-        }
-        
+        if (this.adapter.resetTracking) this.adapter.resetTracking();
         this.index = [];
         this.debouncedBuildIndex();
-        
-        if (this.observer) {
-          this.observer.disconnect();
-        }
+        if (this.observer) this.observer.disconnect();
         this.startObserver();
       }
     }, 1000);
   }
 
   startObserver() {
-    const findContainer = () => {
-      if (this.adapter.findContainer) {
-        return this.adapter.findContainer();
-      }
-      return document.querySelector(this.adapter.containerSelector) || document.body;
-    };
-    
-    const targetNode = findContainer();
-    if (!targetNode) {
-      setTimeout(() => this.startObserver(), 1000);
-      return;
-    }
-
+    const targetNode = document.querySelector(this.adapter.containerSelector) || document.body;
     const config = { childList: true, subtree: true };
     this.observer = new MutationObserver(() => this.debouncedBuildIndex());
     this.observer.observe(targetNode, config);
@@ -115,115 +80,113 @@ class PromptNavigator {
     const toggle = document.createElement('div');
     toggle.id = 'pn-toggle';
     toggle.innerHTML = '🧭';
-    toggle.title = 'Toggle Prompt Navigator';
     document.body.appendChild(toggle);
 
     const sidebar = document.createElement('div');
     sidebar.id = 'pn-sidebar';
     sidebar.className = 'pn-hidden';
+    
+    // FIX: Added #pn-settings-btn back into the header
     sidebar.innerHTML = `
       <div class="pn-header">
         <h3>Prompt Navigator</h3>
         <div class="pn-header-buttons">
+          <button id="pn-settings-btn" title="Settings">⚙️</button>
           <button id="pn-theme-toggle" title="Toggle Theme">🌓</button>
           <button id="pn-close" title="Close">✕</button>
         </div>
       </div>
+      
       <div class="pn-stats">
         <span id="pn-count">0 messages</span>
-        <button id="pn-refresh" title="Refresh Index">🔄</button>
+        <button id="pn-refresh" title="Refresh">🔄</button>
       </div>
-      <div id="pn-list"></div>
+      
+      <div class="pn-list-container" id="pn-list-container">
+        <div id="pn-list"></div>
+      </div>
+
+      <div class="pn-settings-panel pn-hidden" id="pn-settings-panel">
+        <div class="pn-settings-header">
+          <button id="pn-settings-back-btn">← Back</button>
+          <h3>Settings</h3>
+        </div>
+        <div class="pn-settings-content">
+          <div class="pn-form-group">
+            <label>OpenAI API Key</label>
+            <input type="password" id="pn-api-key" placeholder="sk-...">
+            <button id="pn-api-key-save">Save Key</button>
+          </div>
+          <p style="font-size: 12px; color: #94a3b8; margin-top: 10px;">
+            Key is stored locally in your browser. Used for "Generate Title".
+          </p>
+        </div>
+      </div>
     `;
     document.body.appendChild(sidebar);
 
-    // Event listeners
-    toggle.addEventListener('click', () => {
-      sidebar.classList.toggle('pn-hidden');
-    });
-
-    document.getElementById('pn-close').addEventListener('click', () => {
-      sidebar.classList.add('pn-hidden');
-    });
+    // Listeners
+    toggle.addEventListener('click', () => sidebar.classList.toggle('pn-hidden'));
+    document.getElementById('pn-close').addEventListener('click', () => sidebar.classList.add('pn-hidden'));
     
     document.getElementById('pn-refresh').addEventListener('click', () => {
-      if (this.adapter.resetTracking) {
-        this.adapter.resetTracking();
-      }
+      if (this.adapter.resetTracking) this.adapter.resetTracking();
       this.index = [];
       this.buildIndex();
     });
     
-    // Theme toggle
     document.getElementById('pn-theme-toggle').addEventListener('click', () => {
       this.isDarkMode = !this.isDarkMode;
       sidebar.classList.toggle('pn-dark-theme', this.isDarkMode);
-      
-      // Save preference
       chrome.storage.local.set({ darkMode: this.isDarkMode });
     });
     
-    // Apply saved theme
-    if (this.isDarkMode) {
-      sidebar.classList.add('pn-dark-theme');
-    }
+    if (this.isDarkMode) sidebar.classList.add('pn-dark-theme');
+
+    // Initialize Settings Logic
+    this.attachSettingsListeners();
+    this.loadApiKey();
   }
 
   buildIndex() {
-    console.log('[PN] Building index...');
-    
     const messageNodes = document.querySelectorAll(this.adapter.messageSelector);
-    console.log(`[PN] Found ${messageNodes.length} potential message nodes`);
-    
     const newIndex = [];
     
     Array.from(messageNodes).forEach((node, idx) => {
       try {
-        // Validate message
-        if (this.adapter.isValidMessage && !this.adapter.isValidMessage(node)) {
-          return;
-        }
+        if (this.adapter.isValidMessage && !this.adapter.isValidMessage(node)) return;
         
         const role = this.adapter.extractRole(node);
         const preview = this.adapter.extractPreview(node);
         const attachment = this.adapter.extractAttachments(node);
         
-        if (!preview || preview.length < 3) {
-          return;
-        }
+        if (!preview || preview.length < 3) return;
         
         newIndex.push({
           id: `msg-${idx}-${Date.now()}`,
           role,
           preview,
           attachment,
+          fullText: node.textContent || '', // Store full text for NLP
           node,
-          serialNo: role === 'user' ? (newIndex.filter(m => m.role === 'user').length + 1) : null // ONLY rank user messages
+          serialNo: role === 'user' ? (newIndex.filter(m => m.role === 'user').length + 1) : null
         });
-      } catch (err) {
-        console.error('[PN] Error processing node:', err);
-      }
+      } catch (err) { console.error(err); }
     });
 
-    if (newIndex.length === 0 && this.index.length > 0 && this.currentUrl === window.location.href) {
-    console.log('[PN] Scan returned 0 items, preserving existing list.');
-    return; 
-  }
+    if (newIndex.length === 0 && this.index.length > 0 && this.currentUrl === window.location.href) return;
 
-  this.index = newIndex;
-  console.log(`[PN] Index built: ${this.index.length} messages`);
-  this.renderList();
+    this.index = newIndex;
+    this.renderList();
   }
 
   renderList() {
     const listEl = document.getElementById('pn-list');
     const countEl = document.getElementById('pn-count');
-    
-    if (!listEl || !countEl) return;
+    if (!listEl) return;
 
     const userCount = this.index.filter(m => m.role === 'user').length;
     const aiCount = this.index.filter(m => m.role === 'assistant').length;
-    
     countEl.textContent = `${userCount} prompts • ${aiCount} replies`;
 
     if (this.index.length === 0) {
@@ -234,49 +197,136 @@ class PromptNavigator {
     listEl.innerHTML = this.index.map(msg => {
       const roleClass = msg.role === 'user' ? 'pn-user' : 'pn-ai';
       const icon = msg.attachment ? ICONS[msg.attachment] || '' : '';
-      
-      // Only show serial number for USER messages
-      const serialDisplay = msg.role === 'user' ? 
-        `<span class="pn-serial">#${msg.serialNo}</span>` : '';
+      const serialDisplay = msg.role === 'user' ? `<span class="pn-serial">#${msg.serialNo}</span>` : '';
       
       return `
-        <div class="pn-item ${roleClass}" data-id="${msg.id}">
+        <div class="pn-item ${roleClass} pn-jump-item" data-id="${msg.id}">
           <div class="pn-item-header">
             ${serialDisplay}
             ${icon ? `<span class="pn-icon">${icon}</span>` : ''}
             <span class="pn-role">${msg.role === 'user' ? '👤 You' : '🤖 AI'}</span>
           </div>
-          <div class="pn-preview">${this.escapeHtml(msg.preview)}</div>
+          <div class="pn-preview" id="preview-${msg.id}">${this.escapeHtml(msg.preview)}</div>
         </div>
       `;
     }).join('');
 
+    // Attach Click Listeners (Jump & Context Menu)
     listEl.querySelectorAll('.pn-item').forEach(item => {
+      // Left Click -> Jump
       item.addEventListener('click', () => {
+        this.jumpToMessage(item.getAttribute('data-id'));
+      });
+      // Right Click -> Menu
+      item.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
         const id = item.getAttribute('data-id');
-        this.jumpToMessage(id);
+        const msg = this.index.find(m => m.id === id);
+        if (msg) this.showContextMenu(e.pageX, e.pageY, msg);
       });
     });
   }
 
   jumpToMessage(id) {
     const msg = this.index.find(m => m.id === id);
-    if (!msg || !msg.node) {
-      console.error('[PN] Message not found:', id);
+    if (!msg || !msg.node) return;
+    msg.node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    msg.node.style.transition = 'background-color 0.3s ease';
+    msg.node.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
+    setTimeout(() => { msg.node.style.backgroundColor = ''; }, 2000);
+  }
+
+  // --- Settings & NLP ---
+
+  attachSettingsListeners() {
+    const settingsBtn = document.getElementById('pn-settings-btn');
+    const settingsPanel = document.getElementById('pn-settings-panel');
+    const listContainer = document.getElementById('pn-list-container');
+    const backBtn = document.getElementById('pn-settings-back-btn');
+    const saveBtn = document.getElementById('pn-api-key-save');
+
+    if(settingsBtn) {
+      settingsBtn.addEventListener('click', () => {
+        settingsPanel.classList.remove('pn-hidden');
+        listContainer.classList.add('pn-hidden');
+      });
+    }
+    
+    if(backBtn) {
+      backBtn.addEventListener('click', () => {
+        settingsPanel.classList.add('pn-hidden');
+        listContainer.classList.remove('pn-hidden');
+      });
+    }
+
+    if(saveBtn) {
+      saveBtn.addEventListener('click', () => {
+        const key = document.getElementById('pn-api-key').value;
+        chrome.storage.local.set({ 'pn_api_key': key }, () => alert('Key Saved!'));
+      });
+    }
+  }
+
+  loadApiKey() {
+    chrome.storage.local.get(['pn_api_key'], (r) => {
+      if(r.pn_api_key) {
+        const input = document.getElementById('pn-api-key');
+        if(input) input.value = r.pn_api_key;
+      }
+    });
+  }
+
+  createContextMenu() {
+    // Init menu container
+    const menu = document.createElement('div');
+    menu.id = 'pn-context-menu';
+    menu.className = 'pn-context-menu';
+    document.body.appendChild(menu);
+    
+    document.addEventListener('click', () => {
+      menu.style.display = 'none';
+    });
+  }
+
+  showContextMenu(x, y, msg) {
+    const menu = document.getElementById('pn-context-menu');
+    menu.innerHTML = `<button id="pn-ctx-summarize">Generate Title (Premium)</button>`;
+    
+    menu.style.display = 'block';
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+
+    document.getElementById('pn-ctx-summarize').onclick = () => {
+      this.runSummarization(msg);
+      menu.style.display = 'none';
+    };
+  }
+
+  async runSummarization(msg) {
+    const { pn_api_key } = await chrome.storage.local.get(['pn_api_key']);
+    if (!pn_api_key) {
+      alert('Please enter API Key in settings first');
       return;
     }
 
-    msg.node.scrollIntoView({ 
-      behavior: 'smooth', 
-      block: 'center'
-    });
+    const previewEl = document.getElementById(`preview-${msg.id}`);
+    const original = previewEl.innerHTML;
+    previewEl.innerHTML = `<span style="color:#eab308">Summarizing...</span>`;
 
-    msg.node.style.transition = 'background-color 0.3s ease';
-    msg.node.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
-    
-    setTimeout(() => {
-      msg.node.style.backgroundColor = '';
-    }, 2000);
+    try {
+      const res = await chrome.runtime.sendMessage({
+        type: 'NLP_REQUEST',
+        data: { type: 'summarize', text: msg.fullText, apiKey: pn_api_key, provider: 'openai' }
+      });
+      if (res.success) {
+        previewEl.textContent = res.result.summary;
+      } else {
+        throw new Error(res.error);
+      }
+    } catch (e) {
+      previewEl.innerHTML = original;
+      alert(e.message);
+    }
   }
 
   escapeHtml(text) {
@@ -284,128 +334,6 @@ class PromptNavigator {
     div.textContent = text;
     return div.innerHTML;
   }
-  // --- 1. Settings & Context Menu Logic ---
-
-  createContextMenu() {
-    document.addEventListener('contextmenu', (e) => {
-      const item = e.target.closest('.pn-item');
-      if (!item) return;
-      e.preventDefault();
-      const id = item.getAttribute('data-id');
-      const msg = this.index.find(m => m.id === id);
-      if (msg) this.showContextMenu(e.pageX, e.pageY, msg);
-    });
-  }
-
-  showContextMenu(x, y, msg) {
-    const existing = document.getElementById('pn-context-menu');
-    if (existing) existing.remove();
-
-    const menu = document.createElement('div');
-    menu.id = 'pn-context-menu';
-    menu.className = 'pn-context-menu';
-    menu.style.left = `${x}px`;
-    menu.style.top = `${y}px`;
-
-    menu.innerHTML = `
-      <div class="pn-menu-item" id="ctx-jump">Jump to Message</div>
-      <div class="pn-menu-divider"></div>
-      <div class="pn-menu-item" id="ctx-title">Generate Title (Premium)</div>
-    `;
-
-    document.body.appendChild(menu);
-
-    // Action Handlers
-    document.getElementById('ctx-jump').onclick = () => {
-      this.jumpToMessage(msg.id);
-      menu.remove();
-    };
-    
-    document.getElementById('ctx-title').onclick = () => {
-      this.generateTitle(msg);
-      menu.remove();
-    };
-
-    // Close on outside click
-    setTimeout(() => {
-      document.addEventListener('click', () => menu.remove(), { once: true });
-    }, 100);
-  }
-
-  // --- 2. API Call Logic ---
-
-  generateTitle(msg) {
-    chrome.storage.local.get(['pn_api_key'], (result) => {
-      if (!result.pn_api_key) {
-        this.openSettings();
-        alert('Please enter your OpenAI API key first.');
-        return;
-      }
-
-      // Optimistic UI update
-      const originalPreview = msg.preview;
-      // Find the DOM element to update text immediately
-      const itemEl = document.querySelector(`.pn-item[data-id="${msg.id}"] .pn-preview`);
-      if(itemEl) itemEl.textContent = "Generating title...";
-
-      chrome.runtime.sendMessage({
-        type: 'NLP_REQUEST',
-        data: {
-          type: 'summarize',
-          text: msg.preview,
-          apiKey: result.pn_api_key,
-          provider: 'openai'
-        }
-      }, response => {
-        if (response && response.success) {
-          msg.preview = response.result.summary;
-          this.renderList(); // Re-render to show new title
-        } else {
-          if(itemEl) itemEl.textContent = originalPreview;
-          alert('Error: ' + (response?.error || 'Unknown error'));
-        }
-      });
-    });
-  }
-
-  // --- 3. Settings Panel Logic ---
-
-  openSettings() {
-    // Inject settings panel if not exists
-    if (!document.getElementById('pn-settings-panel')) {
-      const sidebar = document.getElementById('pn-sidebar');
-      const panel = document.createElement('div');
-      panel.id = 'pn-settings-panel';
-      panel.className = 'pn-settings-panel';
-      panel.innerHTML = `
-        <div class="pn-settings-header">
-          <button id="pn-settings-back-btn">←</button>
-          <h3>Settings</h3>
-        </div>
-        <div class="pn-settings-content">
-          <div class="pn-form-group">
-            <label>OpenAI API Key</label>
-            <input type="password" id="pn-api-key" placeholder="sk-...">
-            <button id="pn-api-key-save">Save Key</button>
-          </div>
-        </div>
-      `;
-      sidebar.appendChild(panel);
-      
-      // Load saved key
-      chrome.storage.local.get(['pn_api_key'], (r) => {
-        if(r.pn_api_key) document.getElementById('pn-api-key').value = r.pn_api_key;
-      });
-
-      // Listeners
-      document.getElementById('pn-settings-back-btn').onclick = () => panel.remove();
-      document.getElementById('pn-api-key-save').onclick = () => {
-        const key = document.getElementById('pn-api-key').value;
-        chrome.storage.local.set({ 'pn_api_key': key }, () => alert('Key Saved!'));
-      };
-    }
-  }
 }
 
 const nav = new PromptNavigator();
-console.log('[PN] Content script initialized');
