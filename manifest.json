@@ -1,29 +1,34 @@
 {
   "manifest_version": 3,
   "name": "Prompt Navigator",
-  "version": "2.0.0",
-  "description": "Navigate prompts on ChatGPT, Gemini, Claude, Grok, DeepSeek & Perplexity.",
-  "permissions": ["storage"],
-  "host_permissions": [
-  "https://chatgpt.com/*",
-  "https://gemini.google.com/*",
-  "https://claude.ai/*",
-  "https://grok.com/*",
-  "https://x.com/*", 
-  "https://chat.deepseek.com/*",
-  "https://www.perplexity.ai/*"
+  "version": "2.0.1",
+  "description": "Navigate AI conversations with ease. Track prompts across ChatGPT, Gemini, Perplexity, Claude, and DeepSeek.",
+  
+  "permissions": [
+    "storage",
+    "scripting"
   ],
+  
+  "host_permissions": [
+    "https://chat.openai.com/*",
+    "https://chatgpt.com/*",
+    "https://gemini.google.com/*",
+    "https://claude.ai/*",
+    "https://chat.deepseek.com/*",
+    "https://www.perplexity.ai/*"
+  ],
+  
   "background": {
     "service_worker": "background.js"
   },
+  
   "content_scripts": [
     {
       "matches": [
+        "https://chat.openai.com/*",
         "https://chatgpt.com/*",
         "https://gemini.google.com/*",
         "https://claude.ai/*",
-        "https://grok.com/*",
-        "https://x.com/*", 
         "https://chat.deepseek.com/*",
         "https://www.perplexity.ai/*"
       ],
@@ -31,14 +36,28 @@
         "adapters/base.js",
         "adapters/chatgpt.js",
         "adapters/gemini.js",
-        "adapters/claude.js",
-        "adapters/grok.js",
-        "adapters/deepseek.js",
         "adapters/perplexity.js",
+        "adapters/claude.js",
+        "adapters/deepseek.js",
         "content.js"
       ],
-      "css": ["sidebar.css"],
-      "run_at": "document_idle"
+      "css": ["ui/sidebar.css"],
+      "run_at": "document_end"
     }
-  ]
+  ],
+  
+  "action": {
+    "default_popup": "ui/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
 }
