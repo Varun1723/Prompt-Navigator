@@ -807,14 +807,26 @@ body {
   background-clip: text;
 }
 
+/* In popup.css */
+
 .version {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  background: var(--color-surface);
-  padding: var(--space-6) var(--space-12);
-  border-radius: var(--radius-sm);
+  align-self: flex-start;
+  padding: var(--space-4) var(--space-10);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  
+  /* --- THE FIX START --- */
+  /* 1. Reset the parent's gradient text effect */
+  -webkit-background-clip: border-box;
+  -webkit-text-fill-color: initial;
+  background-clip: border-box;
+  
+  /* 2. Now you can set your specific colors */
+  color: var(--color-white); /* Makes the text blue */
+  background: rgba(59, 130, 246, 0.1); /* Optional: Adds a subtle blue background tint */
+  border: 1px solid rgba(59, 130, 246, 0.2); /* Optional: Adds a subtle border */
+  /* --- THE FIX END --- */
 }
 
 /* Section styling */
