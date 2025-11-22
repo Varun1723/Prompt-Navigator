@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html>
+<head><title>Icon Generator</title></head>
+<body>
+  <h1>Prompt Navigator Icon Generator</h1>
+  <button onclick="generateIcons()">Generate Icons</button>
+  <div id="output"></div>
+  
+  <script>
+    function generateIcons() {
+      const sizes = [16, 48, 128];
+      const output = document.getElementById('output');
+      output.innerHTML = '';
+      
+      sizes.forEach(size => {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        
+        // Background
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(0, 0, size, size);
+        
+        // Compass circle
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = size * 0.1;
+        ctx.beginPath();
+        ctx.arc(size/2, size/2, size*0.35, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Compass needle
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(size/2, size*0.25);
+        ctx.lineTo(size/2, size*0.5);
+        ctx.lineTo(size*0.65, size*0.5);
+        ctx.fill();
+        
+        // Download link
+        const link = document.createElement('a');
+        link.download = `icon${size}.png`;
+        link.href = canvas.toDataURL();
+        link.textContent = `Download icon${size}.png`;
+        link.style.display = 'block';
+        link.style.margin = '10px';
+        output.appendChild(link);
+      });
+    }
+  </script>
+</body>
+</html>
