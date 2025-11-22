@@ -19,7 +19,7 @@ tabButtons.forEach(button => {
 // --- 2. File Contents (The Actual Extension Code) ---
 const fileContents = {
   'manifest': `{
-  "manifest_version": 3,
+  "manifest_version": 3.1.0,
   "name": "Prompt Navigator",
   "version": "3.1.0",
   "description": "Navigate AI conversations on ChatGPT, Gemini, and Perplexity.",
