@@ -31,7 +31,7 @@ Prompt Navigator is a **local-first** Chrome extension that dynamically indexes 
 
 ### Premium Features (Optional)
 
-- **📝 AI Summarization** - Generate concise titles and summaries for conversations (requires OpenAI API key)
+- **📝 AI Summarization** - Generate concise titles and summaries for conversations (requires OpenAI /Gemini API key)
 
 ---
 

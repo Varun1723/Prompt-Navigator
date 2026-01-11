@@ -1114,3 +1114,41 @@ body {
     padding: var(--space-4) var(--space-10);
   }
 }
+
+.github-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  background-color: #24292e; /* GitHub Black */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s, background-color 0.2s;
+}
+
+.github-button:hover {
+  background-color: #1b1f23;
+  transform: translateY(-1px);
+}
+
+.github-button:active {
+  transform: translateY(0);
+}
+
+/* Make link buttons grid better (optional tweaks) */
+.links {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.link-button {
+  margin-bottom: 0; /* Remove old margin */
+  font-size: 12px;
+}

@@ -1,24 +1,21 @@
-// popup.js - Extension popup logic
+// popup.js - v3.1 Logic
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Popup opened');
-  // Just link the buttons
-  document.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', () => {
+
+  // 1. Handle "Quick Links" (Open in new tab)
+  document.querySelectorAll('.link-button').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault(); // Prevent default anchor behavior
       chrome.tabs.create({ url: link.href });
     });
   });
 
-  // Help button
-  document.getElementById('helpBtn').addEventListener('click', () => {
-    // Open help page
-    window.open('https://github.com/Varun1723/Prompt-Navigator', '_blank');
-  });
-
-  // Platform status - could be dynamic from storage
-  chrome.storage.local.get(['lastPlatformUsed'], (result) => {
-    if (result.lastPlatformUsed) {
-      console.log('Last used:', result.lastPlatformUsed);
-    }
-  });
+  // 2. Handle "Star on GitHub" Button
+  const githubBtn = document.getElementById('githubBtn');
+  if (githubBtn) {
+    githubBtn.addEventListener('click', () => {
+      chrome.tabs.create({ url: 'https://github.com/Varun1723/Prompt-Navigator' });
+    });
+  }
 });
