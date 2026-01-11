@@ -1,5 +1,5 @@
-// content.js - v3.1 FINAL FIX
-// Restores Settings Button, Fixes Menu Logic
+// content.js - v3.4 FINAL POLISH
+// Features: Key Icon, Premium Service Header, Clean Links
 
 function debounce(func, wait) {
   let timeout;
@@ -10,7 +10,7 @@ function debounce(func, wait) {
   };
 }
 
-console.log('[PN] Content script v3.1 - SETTINGS RESTORED');
+console.log('[PN] Content script v3.4 - FINAL POLISH');
 
 const ICONS = {
   image: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
@@ -27,7 +27,6 @@ class PromptNavigator {
     this.observer = null;
     this.currentUrl = window.location.href;
     this.isDarkMode = false;
-    
     setTimeout(() => { this.init(); }, 2000);
   }
 
@@ -35,23 +34,15 @@ class PromptNavigator {
     const host = window.location.hostname;
     if (host.includes('chatgpt.com')) this.adapter = new ChatGPTAdapter();
     else if (host.includes('gemini.google.com')) this.adapter = new GeminiAdapter();
-    else if (host.includes('claude.ai')) this.adapter = new ClaudeAdapter();
-    else if (host.includes('deepseek.com')) this.adapter = new DeepSeekAdapter();
     else if (host.includes('perplexity.ai')) this.adapter = new PerplexityAdapter();
-    else if (host.includes('grok.com') || host.includes('x.com')) this.adapter = new GrokAdapter();
     else return;
 
-    console.log(`[PN] Detected ${this.adapter.platformName}`);
-    
-    chrome.storage.local.get(['darkMode'], (result) => {
-      this.isDarkMode = result.darkMode || false;
-    });
-    
+    chrome.storage.local.get(['darkMode'], (result) => { this.isDarkMode = result.darkMode || false; });
     this.injectSidebar();
     this.buildIndex();
     this.startObserver();
     this.startUrlWatcher();
-    this.createContextMenu(); // Prepare the context menu
+    this.createContextMenu();
   }
 
   startUrlWatcher() {
@@ -86,12 +77,12 @@ class PromptNavigator {
     sidebar.id = 'pn-sidebar';
     sidebar.className = 'pn-hidden';
     
-    // FIX: Added #pn-settings-btn back into the header
+    // UPDATED HTML: Key Icon & "Premium Service" Title
     sidebar.innerHTML = `
       <div class="pn-header">
         <h3>Prompt Navigator</h3>
         <div class="pn-header-buttons">
-          <button id="pn-settings-btn" title="Settings">⚙️</button>
+          <button id="pn-settings-btn" title="Premium Service">🔑</button>
           <button id="pn-theme-toggle" title="Toggle Theme">🌓</button>
           <button id="pn-close" title="Close">✕</button>
         </div>
@@ -109,26 +100,34 @@ class PromptNavigator {
       <div class="pn-settings-panel pn-hidden" id="pn-settings-panel">
         <div class="pn-settings-header">
           <button id="pn-settings-back-btn">← Back</button>
-          <h3>Settings</h3>
+          <h3>Premium Service</h3>
         </div>
         <div class="pn-settings-content">
+          
           <div class="pn-form-group">
-            <label>OpenAI API Key</label>
-            <input type="password" id="pn-api-key" placeholder="sk-...">
+            <label>AI Provider</label>
+            <select id="pn-provider-select">
+              <option value="gemini">Google Gemini</option>
+              <option value="openai">OpenAI (GPT-3.5)</option>
+            </select>
+          </div>
+
+          <div class="pn-form-group">
+            <label id="pn-key-label">Gemini API Key</label>
+            <input type="password" id="pn-api-key" placeholder="Paste Key Here...">
             <button id="pn-api-key-save">Save Key</button>
           </div>
-          <p style="font-size: 12px; color: #94a3b8; margin-top: 10px;">
-            Key is stored locally in your browser. Used for "Generate Title".
-          </p>
+          
+          <div id="pn-help-text" style="margin-top: 15px; font-size: 12px; color: var(--pn-text-secondary); line-height: 1.5;">
+            </div>
         </div>
       </div>
     `;
     document.body.appendChild(sidebar);
 
-    // Listeners
+    // Basic Toggles
     toggle.addEventListener('click', () => sidebar.classList.toggle('pn-hidden'));
     document.getElementById('pn-close').addEventListener('click', () => sidebar.classList.add('pn-hidden'));
-    
     document.getElementById('pn-refresh').addEventListener('click', () => {
       if (this.adapter.resetTracking) this.adapter.resetTracking();
       this.index = [];
@@ -140,42 +139,154 @@ class PromptNavigator {
       sidebar.classList.toggle('pn-dark-theme', this.isDarkMode);
       chrome.storage.local.set({ darkMode: this.isDarkMode });
     });
-    
     if (this.isDarkMode) sidebar.classList.add('pn-dark-theme');
 
-    // Initialize Settings Logic
     this.attachSettingsListeners();
-    this.loadApiKey();
   }
 
+  attachSettingsListeners() {
+    const settingsPanel = document.getElementById('pn-settings-panel');
+    const listContainer = document.getElementById('pn-list-container');
+    const providerSelect = document.getElementById('pn-provider-select');
+    const keyLabel = document.getElementById('pn-key-label');
+    const keyInput = document.getElementById('pn-api-key');
+    const helpText = document.getElementById('pn-help-text');
+
+    // Open/Close
+    document.getElementById('pn-settings-btn').onclick = () => {
+      settingsPanel.classList.remove('pn-hidden');
+      listContainer.classList.add('pn-hidden');
+      this.loadSettings();
+    };
+    document.getElementById('pn-settings-back-btn').onclick = () => {
+      settingsPanel.classList.add('pn-hidden');
+      listContainer.classList.remove('pn-hidden');
+    };
+
+    // UI Updates based on selection
+    const updateUI = (provider) => {
+      if (provider === 'openai') {
+        keyLabel.textContent = 'OpenAI API Key';
+        keyInput.placeholder = 'sk-...';
+        // Clean Link Style for OpenAI
+        helpText.innerHTML = `
+          <p>1. Go to <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--pn-primary)">OpenAI Platform</a>.</p>
+          <p>2. Create a new secret key.</p>
+          <p>3. Paste it here.</p>
+        `;
+      } else {
+        keyLabel.textContent = 'Gemini API Key';
+        keyInput.placeholder = 'AIzaSy...';
+        // Clean Link Style for Gemini
+        helpText.innerHTML = `
+          <p>1. Go to <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--pn-primary)">Google AI Studio</a>.</p>
+          <p>2. Create API Key.</p>
+          <p>3. Paste it here.</p>
+        `;
+      }
+    };
+
+    // Change Listener
+    providerSelect.addEventListener('change', (e) => {
+      updateUI(e.target.value);
+    });
+
+    // Save Button
+    document.getElementById('pn-api-key-save').onclick = () => {
+      const provider = providerSelect.value;
+      const key = keyInput.value;
+      
+      chrome.storage.local.set({ 
+        'pn_provider': provider,
+        'pn_api_key': key 
+      }, () => alert(`Saved ${provider === 'openai' ? 'OpenAI' : 'Gemini'} Key!`));
+    };
+  }
+
+  loadSettings() {
+    chrome.storage.local.get(['pn_provider', 'pn_api_key'], (r) => {
+      const provider = r.pn_provider || 'gemini';
+      document.getElementById('pn-provider-select').value = provider;
+      document.getElementById('pn-api-key').value = r.pn_api_key || '';
+      
+      // Trigger UI update manually to set correct links
+      document.getElementById('pn-provider-select').dispatchEvent(new Event('change'));
+    });
+  }
+
+  async runSummarization(msg) {
+    const { pn_api_key, pn_provider } = await chrome.storage.local.get(['pn_api_key', 'pn_provider']);
+    
+    if (!pn_api_key) {
+      document.getElementById('pn-settings-btn').click();
+      return;
+    }
+
+    const previewEl = document.getElementById(`preview-${msg.id}`);
+    const original = previewEl.innerHTML;
+    previewEl.innerHTML = `<span style="color:#eab308">Generating...</span>`;
+
+    try {
+      const res = await chrome.runtime.sendMessage({
+        type: 'NLP_REQUEST',
+        data: { 
+          text: msg.fullText, 
+          apiKey: pn_api_key,
+          provider: pn_provider || 'gemini'
+        }
+      });
+      
+      if (res.success) {
+        previewEl.textContent = res.result.summary;
+      } else {
+        throw new Error(res.error);
+      }
+    } catch (e) {
+      previewEl.innerHTML = original;
+      alert("Error: " + e.message);
+    }
+  }
+
+  // ... (Standard Methods Below) ...
+  
+  createContextMenu() {
+    const menu = document.createElement('div');
+    menu.id = 'pn-context-menu';
+    menu.className = 'pn-context-menu';
+    document.body.appendChild(menu);
+    document.addEventListener('click', () => { menu.style.display = 'none'; });
+  }
+
+  showContextMenu(x, y, msg) {
+    const menu = document.getElementById('pn-context-menu');
+    menu.innerHTML = `<button id="pn-ctx-summarize">✨ Generate Title (AI)</button>`;
+    menu.style.display = 'block';
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+
+    document.getElementById('pn-ctx-summarize').onclick = () => {
+      this.runSummarization(msg);
+      menu.style.display = 'none';
+    };
+  }
+  
   buildIndex() {
     const messageNodes = document.querySelectorAll(this.adapter.messageSelector);
     const newIndex = [];
-    
     Array.from(messageNodes).forEach((node, idx) => {
       try {
         if (this.adapter.isValidMessage && !this.adapter.isValidMessage(node)) return;
-        
         const role = this.adapter.extractRole(node);
         const preview = this.adapter.extractPreview(node);
         const attachment = this.adapter.extractAttachments(node);
-        
         if (!preview || preview.length < 3) return;
-        
         newIndex.push({
-          id: `msg-${idx}-${Date.now()}`,
-          role,
-          preview,
-          attachment,
-          fullText: node.textContent || '', // Store full text for NLP
-          node,
+          id: `msg-${idx}-${Date.now()}`, role, preview, attachment, fullText: node.textContent || '', node,
           serialNo: role === 'user' ? (newIndex.filter(m => m.role === 'user').length + 1) : null
         });
       } catch (err) { console.error(err); }
     });
-
     if (newIndex.length === 0 && this.index.length > 0 && this.currentUrl === window.location.href) return;
-
     this.index = newIndex;
     this.renderList();
   }
@@ -184,21 +295,16 @@ class PromptNavigator {
     const listEl = document.getElementById('pn-list');
     const countEl = document.getElementById('pn-count');
     if (!listEl) return;
-
     const userCount = this.index.filter(m => m.role === 'user').length;
     const aiCount = this.index.filter(m => m.role === 'assistant').length;
     countEl.textContent = `${userCount} prompts • ${aiCount} replies`;
 
-    if (this.index.length === 0) {
-      listEl.innerHTML = '<div class="pn-empty">No messages found</div>';
-      return;
-    }
+    if (this.index.length === 0) { listEl.innerHTML = '<div class="pn-empty">No messages found</div>'; return; }
 
     listEl.innerHTML = this.index.map(msg => {
       const roleClass = msg.role === 'user' ? 'pn-user' : 'pn-ai';
       const icon = msg.attachment ? ICONS[msg.attachment] || '' : '';
       const serialDisplay = msg.role === 'user' ? `<span class="pn-serial">#${msg.serialNo}</span>` : '';
-      
       return `
         <div class="pn-item ${roleClass} pn-jump-item" data-id="${msg.id}">
           <div class="pn-item-header">
@@ -211,13 +317,8 @@ class PromptNavigator {
       `;
     }).join('');
 
-    // Attach Click Listeners (Jump & Context Menu)
     listEl.querySelectorAll('.pn-item').forEach(item => {
-      // Left Click -> Jump
-      item.addEventListener('click', () => {
-        this.jumpToMessage(item.getAttribute('data-id'));
-      });
-      // Right Click -> Menu
+      item.addEventListener('click', () => { this.jumpToMessage(item.getAttribute('data-id')); });
       item.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         const id = item.getAttribute('data-id');
@@ -234,99 +335,6 @@ class PromptNavigator {
     msg.node.style.transition = 'background-color 0.3s ease';
     msg.node.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
     setTimeout(() => { msg.node.style.backgroundColor = ''; }, 2000);
-  }
-
-  // --- Settings & NLP ---
-
-  attachSettingsListeners() {
-    const settingsBtn = document.getElementById('pn-settings-btn');
-    const settingsPanel = document.getElementById('pn-settings-panel');
-    const listContainer = document.getElementById('pn-list-container');
-    const backBtn = document.getElementById('pn-settings-back-btn');
-    const saveBtn = document.getElementById('pn-api-key-save');
-
-    if(settingsBtn) {
-      settingsBtn.addEventListener('click', () => {
-        settingsPanel.classList.remove('pn-hidden');
-        listContainer.classList.add('pn-hidden');
-      });
-    }
-    
-    if(backBtn) {
-      backBtn.addEventListener('click', () => {
-        settingsPanel.classList.add('pn-hidden');
-        listContainer.classList.remove('pn-hidden');
-      });
-    }
-
-    if(saveBtn) {
-      saveBtn.addEventListener('click', () => {
-        const key = document.getElementById('pn-api-key').value;
-        chrome.storage.local.set({ 'pn_api_key': key }, () => alert('Key Saved!'));
-      });
-    }
-  }
-
-  loadApiKey() {
-    chrome.storage.local.get(['pn_api_key'], (r) => {
-      if(r.pn_api_key) {
-        const input = document.getElementById('pn-api-key');
-        if(input) input.value = r.pn_api_key;
-      }
-    });
-  }
-
-  createContextMenu() {
-    // Init menu container
-    const menu = document.createElement('div');
-    menu.id = 'pn-context-menu';
-    menu.className = 'pn-context-menu';
-    document.body.appendChild(menu);
-    
-    document.addEventListener('click', () => {
-      menu.style.display = 'none';
-    });
-  }
-
-  showContextMenu(x, y, msg) {
-    const menu = document.getElementById('pn-context-menu');
-    menu.innerHTML = `<button id="pn-ctx-summarize">Generate Title (Premium)</button>`;
-    
-    menu.style.display = 'block';
-    menu.style.left = `${x}px`;
-    menu.style.top = `${y}px`;
-
-    document.getElementById('pn-ctx-summarize').onclick = () => {
-      this.runSummarization(msg);
-      menu.style.display = 'none';
-    };
-  }
-
-  async runSummarization(msg) {
-    const { pn_api_key } = await chrome.storage.local.get(['pn_api_key']);
-    if (!pn_api_key) {
-      alert('Please enter API Key in settings first');
-      return;
-    }
-
-    const previewEl = document.getElementById(`preview-${msg.id}`);
-    const original = previewEl.innerHTML;
-    previewEl.innerHTML = `<span style="color:#eab308">Summarizing...</span>`;
-
-    try {
-      const res = await chrome.runtime.sendMessage({
-        type: 'NLP_REQUEST',
-        data: { type: 'summarize', text: msg.fullText, apiKey: pn_api_key, provider: 'openai' }
-      });
-      if (res.success) {
-        previewEl.textContent = res.result.summary;
-      } else {
-        throw new Error(res.error);
-      }
-    } catch (e) {
-      previewEl.innerHTML = original;
-      alert(e.message);
-    }
   }
 
   escapeHtml(text) {

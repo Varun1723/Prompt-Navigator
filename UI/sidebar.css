@@ -159,5 +159,20 @@
   width: 100%; padding: 10px; background: var(--pn-primary);
   color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
 }
+/* Add this to your ui/sidebar.css */
 
+#pn-provider-select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--pn-border);
+  background: var(--pn-surface);
+  color: var(--pn-text);
+  margin-bottom: 15px;
+  cursor: pointer;
+}
+
+#pn-provider-select:focus {
+  outline: 2px solid var(--pn-accent);
+}
 .pn-hidden { display: none !important; }
