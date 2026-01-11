@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Help button
   document.getElementById('helpBtn').addEventListener('click', () => {
     // Open help page
-    window.open('https://github.com/yourusername/prompt-navigator', '_blank');
+    window.open('https://github.com/Varun1723/Prompt-Navigator', '_blank');
   });
 
   // Platform status - could be dynamic from storage
