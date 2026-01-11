@@ -49,7 +49,7 @@
 #pn-sidebar {
   position: fixed;
   top: 0; right: 0;
-  width: 360px; height: 100vh;
+  width: 355px; height: 100vh;
   background: var(--pn-surface); /* Uses solid color now */
   border-left: 1px solid var(--pn-border);
   z-index: 2147483646;
