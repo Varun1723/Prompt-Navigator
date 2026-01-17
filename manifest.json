@@ -3,7 +3,7 @@
   "name": "Prompt Navigator: AI Chat Index & Navigation Tool",
   "version": "3.1.0",
   "description": "Instantly navigate long conversations on ChatGPT, Gemini, and Perplexity. Automatically indexes prompts and detects attachments.",
-  "permissions": ["storage", "scripting"],
+  "permissions": ["storage"],
   "host_permissions": [
     "https://chatgpt.com/*",
     "https://gemini.google.com/*",

@@ -31,7 +31,6 @@ The Extension offers an optional **"Generate Title"** feature that utilizes thir
 To provide the functionality described, the Extension requires the following permissions:
 
 - **`storage`**: Required to save API keys and theme/preferences locally.
-- **`scripting`**: Required to inject the sidebar UI and floating navigation button into supported AI chat interfaces.
 - **Host permissions** (for supported AI pages, e.g., `https://chat.openai.com/*`, `https://gemini.google.com/*`, `https://perplexity.ai/*`): Required so content scripts can read message structure and detect file attachments to build the local navigation index.
 
 > The extension does **not** request broad `"<all_urls>"` host permissions. It only requests access to the specific AI chat domains it supports.

@@ -1,8 +1,8 @@
-# 🧭 Prompt Navigator v3.1.0
+# 🧭 Prompt Navigator v3.1.1
 
 **A privacy-first Chrome extension for navigating AI conversations**
 
-![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-3.1.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 ## 🚀 Overview
@@ -247,7 +247,7 @@ The extension requires minimal permissions:
 **Issue**: 🌓 button doesn't toggle theme
 
 **Solutions**:
-1. Verify you're using the latest version (v3.1.0)
+1. Verify you're using the latest version (v3.1.1)
 2. Check browser console for errors
 3. Try closing and reopening the sidebar
 

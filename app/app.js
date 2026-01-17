@@ -19,7 +19,7 @@ const fileContents = {
   'manifest': `{
   "manifest_version": 3,
   "name": "Prompt Navigator: AI Chat Index & Navigation Tool",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "Instantly navigate long conversations on ChatGPT, Gemini, and Perplexity. Automatically indexes prompts and detects attachments.",
   "permissions": ["storage", "scripting"],
   "host_permissions": [
@@ -200,7 +200,7 @@ const nav = new PromptNavigator();`,
         <img src="../icons/icon48.png" alt="Logo" style="width: 32px; height: 32px; display: block;">
         <h1>Prompt Navigator</h1>
       </div>
-      <span class="version">v3.1.0</span>
+      <span class="version">v3.1.1</span>
     </div>
     <div class="section">
       <h2>Platform Status</h2>
