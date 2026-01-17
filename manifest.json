@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Prompt Navigator: AI Chat Index & Navigation Tool",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "Instantly navigate long conversations on ChatGPT, Gemini, and Perplexity. Automatically indexes prompts and detects attachments.",
   "permissions": ["storage"],
   "host_permissions": [
