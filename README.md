@@ -4,6 +4,7 @@
 
 ![Version](https://img.shields.io/badge/version-3.1.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-Install-blue?logo=googlechrome)](https://chromewebstore.google.com/detail/prompt-navigator-ai-chat/geeekdpdieebopgfjhhapjjfmgfgepgi?hl=en)
 
 ## 🚀 Overview
 
@@ -16,7 +17,13 @@ Prompt Navigator is a **local-first** Chrome extension that dynamically indexes 
 - ✅ **Perplexity AI**
 
 ---
+## 🟢 Available on Chrome Web Store
 
+Prompt Navigator is officially published and publicly available on the Chrome Web Store.
+
+👉 **Install here:** [Prompt Navigator: AI Chat Index & Navigation Tool](https://chromewebstore.google.com/detail/prompt-navigator-ai-chat/geeekdpdieebopgfjhhapjjfmgfgepgi?hl=en)
+
+---
 ## 🎯 Key Features
 
 ### Core Features (Always Free)
@@ -31,13 +38,19 @@ Prompt Navigator is a **local-first** Chrome extension that dynamically indexes 
 
 ### Premium Features (Optional)
 
-- **📝 AI Summarization** - Generate concise titles and summaries for conversations (requires OpenAI /Gemini API key)
+- **📝 AI Auto-Titles** – Generate concise 5–8 word titles for prompts (requires OpenAI / Gemini API key)
 
 ---
 
 ## 📦 Installation
 
-### Method 1: Load Unpacked (Development)
+### Method 1: Chrome Web Store (Recommended)
+
+1. Visit the Chrome Web Store listing  
+2. Click **[Add to Chrome](https://chromewebstore.google.com/detail/prompt-navigator-ai-chat/geeekdpdieebopgfjhhapjjfmgfgepgi?hl=en)**  
+3. Open ChatGPT, Gemini, or Perplexity —> Prompt Navigator activates automatically
+
+### Method 2: Load Unpacked (Development)
 
 1. **Download** this repository or clone it:
    ```bash
